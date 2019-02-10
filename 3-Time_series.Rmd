@@ -1,0 +1,367 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+---
+title: "3-Time Series Analysis of NDVI at CO5"
+
+---
+Author: Foad Yousef
+
+Institute: University of California Los Angeles
+
+Last Modified: 3/11/2017
+
+
+\newpage
+
+```{r setup, include=T, message=FALSE, echo=F}
+knitr::opts_chunk$set(echo = TRUE)
+options(warn=-1)
+```
+
+You will be working with more packages. Make sure to install these packages before proceeding with this tutorial. If you forgot how to install packages, review the "simple processing" document. 
+
+**1.** Load the following packages in R. 
+
+```{r include=TRUE, message=FALSE}
+library(bfastSpatial)
+library(raster)
+library(rgdal)
+library(tools)
+library(RColorBrewer)
+library(tcltk)
+library(beepr)
+library(ggplot2)
+library(scales)
+```
+
+Before working with the time series data, a few important details about the basics of this code:
+
+  + Both the raster and shapefiles should have the same coordinate system projection.
+
+  + The extent of shapefile needs to be inside  the extent of the raster file (shapefile should be completely inside the raster file). This is important for stacking all he images in time seris analysis. All images should have the same extent.
+
+  + This code extracts the scenes from a zip file. The products that you will be working with needs to be inside the zip file (e.g. if you need both NDVI and Cloud Mark products, they should be present in the zip file). Therefore, when ordering data from ESPA, make sure to include every layer you wish to process. 
+
+
+### Read, write and assign directories. 
+
+**1.** This is where you would pick your directories. `Product` is the type of index you will be processing. In this example we will be working with **NDVI**.
+
+
+```{r include=TRUE, message=FALSE}
+product <- 'ndvi'
+```
+
+**2.** Load data files. The `datadir` is referring to where the original data is stored on you computer. `wd` or "working directory"" is the name of the folder that all the processed data and outputs are going to be stored. Finally, `crop_file` is where the riparian zone shapefile is stored. 
+
+**Warning:** Please make sure to change all the following directories to match the folder addresses where you have stored the data. 
+
+```{r include=TRUE, message=FALSE}
+datadir <- "C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/3-timeseries"
+wd <- "C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/3-timeseries/"
+crop_file <- "C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/shpfile/CO5.shp"
+```
+
+**3.**. Storage management of final products are important. Under the output folder, several directories are created to organize the output files. This becomes important when working with large datasets and several indices. 
+
+```{r include=TRUE, message=FALSE}
+dirout <- file.path(paste0(datadir, "/processed//")) 
+sdir <- file.path(paste0(datadir, "/Stack"))
+figtab <- file.path(paste0(wd, "/Graphs//"))
+slpdir <- file.path(paste0(wd, "/Slope//"))
+pvldir <- file.path(paste0(wd, "/P_value//"))
+meandir <- file.path(paste0(wd, "/Means//"))
+sigdir <- file.path(paste0(wd, "/SigSlp//"))
+tabdir <- file.path(paste0(wd, "/Tables//"))
+```
+
+**4.** File-path names are now ready to be used with `dir.create` function. We can use a `for` loop to save time. Note: if these folders already exist, R will ignore them and proceed to the next line (they will not be overwritten).
+
+```{r eval=FALSE}
+dirlist <- c(dirout, sdir, figtab, slpdir, pvldir, meandir, sigdir, tabdir)
+print("Creating Output Directories")
+for (dir in dirlist) {
+  dir.create(dir, showWarning=FALSE, recursive=TRUE)
+}
+```
+
+**5.** To reduce the processing time and storage size, we will use a shapefile to crop the outputs. This shapefile is the riparian zone boundary at CO5 (Colorado 5) station. 
+
+```{r eval=FALSE}
+crop_name <- file_path_sans_ext(basename(crop_file))
+crop_obj <- readOGR(dsn=crop_file, crop_name, verbose = FALSE)
+
+```
+
+**6.** Create a list of available files to be processed. Note that we don't need to decompress these files. 
+
+```{r include=TRUE, message=FALSE}
+list <- list.files(datadir, full.names=TRUE, pattern = "*.gz")
+fcount <- length(list)
+```
+
+**7.** Check to see if you have correctly changed the `datadir` folder. The following line is printing what the software is actually going to work with. Ideally, you should see a list of 13 files printed after executing the following line.
+
+```{r include=TRUE, message=TRUE}
+print(paste("Total number of files is:", fcount))
+```
+
+**8.** Everything is ready for image processing. The following block of code will perform several tasks over every one of those files listed above. NDVI images inside each zip file will be extracted, masked with `cloud mask` and cropped to the extent of the `crop_obj`. These tasks are repeated for every image in our dataset. This is the most time consuming step of the processing. The results are being stored on the physical drive. If you would like to perform more analysis in the future, you can work with the processed/stored images and save both time and storage space. Note that the default format for storing the outputs is `.grd` (ESRI grid). You can change that to any desired file format (e.g. tiff, img, etc.) using the `format` argumnt (e.g. `format=".GeoTif"`).
+
+```{r eval=FALSE}
+t=1
+for (m in list){
+  print(paste0("Now Processing # ", t, ": ", m))
+  processLandsat(x=m, vi=product, outdir=dirout, srdir=sdir, delete=TRUE, 
+                 mask='fmask', keep=0, overwrite=TRUE, e=extent(crop_obj))
+  t=t+1
+}
+```
+
+
+------------------------
+
+#### Activity 1. List and print the proccessed files in the `processed` folder. 
+<br>
+<br>
+<br>
+
+------------------------
+
+**9.** Depending on the processing power of your computer, the previous block of code should take between 2-5 minutes to finish. The results are stored in the `processed` folder. We will make a second list to store the physical address of the processed files. 
+
+
+```{r include=TRUE, message=FALSE}
+list2 <- list.files(dirout, pattern=glob2rx(paste0(product,'*','.grd')), full.names=TRUE)
+fcount <- length(list2)
+```
+
+Check and see how many files will you be processing. This should be the same as the number of input files.
+
+```{r include=TRUE, message=FALSE}
+print(paste("Total number of files is:", fcount))
+```
+
+**10.** Following the first image processing round, two very important steps remain. 
+
+  + Masking. Use the shapefile to mask out all the pixels outside of our study site. Use another `for` loop to achieve this.
+  + Irregular time series: Time series datasets are usually regular (have similar time intervals). This is not the case in many satellite imagery datasets where images are at irregular intervals (e.g. missing imagery due to clouds or ice). Therefore, we need to construct an irregular time series object. Notice the `d` object where we are storing the date component. The date is stored in filename. Here we can you the `getSceneinfo` function to retrieve the dates for each image. 
+
+```{r eval=FALSE}
+t=1
+d <- raster()
+for (x in list2) {
+  d <- mask(raster(x), crop_obj) #Mask the files
+  time <- getSceneinfo(x)$date
+  d <- setZ(x=d, z=time)
+  names(d) <- row.names(getSceneinfo(x))
+  writeRaster(d, paste0(dirout,product,".",names(d)), overwrite=TRUE)
+  print(paste0("Processing ", t, " of ", fcount, ". Filename: ",names(d)))
+  t=t+1
+}
+```
+
+Make a new list to check the status of the above processing. 
+
+```{r include=TRUE, message=FALSE}
+list3 <- list.files(dirout, pattern=glob2rx(paste0(product,'*','.grd')), full.names=TRUE)
+```
+
+**11.** The final step is to stack all the above files into a single raster stack. All layers have similar spatial extent. Use the following lines to define a name and location to store the stack layer. This file can also be reused later for additional analysis.
+
+```{r eval=FALSE}
+stackName <- file.path(sdir, paste0(crop_name,'_',product,'_stack.grd'))
+ESPA_VI <- timeStack(x=list3, filename=stackName, datatype='INT2S', overwrite=TRUE)
+```
+
+-----------------------
+
+
+### Time Series Analysis For Every Pixel
+
+**12.** We will be using the following two functions to fit a linear regression to each pixel within our study site. The produced images store the components of the fitted line (e.g. slope, p_value, etc.). The first function calculates the slope of the linear regression model. The second function calculates the p_values of the f-test for the regression analysis. P_values below 0.05 represent a significant trend.
+
+```{r include=TRUE, message=FALSE}
+fun_slope <- function(y) { 
+  if(all(is.na(y))) {
+    NA
+  } else {
+    m = lm(y ~ ESPA_VI@z$time); summary(m)$coefficients[2] 
+  }
+}
+
+fun_pvalue <- function(y) { 
+  if(all(is.na(y))) {
+    NA
+  } else {
+    m = lm(y ~ ESPA_VI@z$time); summary(m)$coefficients[8] 
+  }
+}
+```
+
+**13.** Now, utilize the above functions and calculate the slope and p_value of the stacked rasters.  
+
+```{r eval=FALSE}
+slope <- calc(ESPA_VI, fun_slope)
+pvalue <- calc(ESPA_VI, fun_pvalue)
+```
+
+**14.** As the final step, mask out any insignificant trend by applying the following lines of code. Any Pixels that does not have significant trend is assigned with a `NA` or no-data value. For pixels with a significant trend (+ve or -ve), the slope value is stored in a new layer called `trend.sig`. 
+
+```{r eval=FALSE}
+m = c(0, 0.05, 1, 0.05, 1, 0)
+rclmat = matrix(m, ncol=3, byrow=TRUE)
+p.mask = reclassify(pvalue, rclmat)
+fun_mask=function(x) { x[x<1] <- NA; return(x)}
+p.mask.NA = calc(p.mask, fun_mask)
+trend.sig = mask(slope, p.mask.NA)
+```
+
+-------------------------------
+
+#### Plotting the Final Results
+
+**15.** Proceed to plot the slope, p-value and pixels with a significant trend. Visualization is an important step in our analysis. You can make sure that the output looks "good" and is what you expect it to be. You can also get a quick estimate of the final results. 
+
+```{r include=TRUE, echo=FALSE, message=FALSE}
+slope <- raster("C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/3-timeseries/Slope/CO5.tif")
+```
+
+  + Slope. Notice that slopes have both postive (increasing) and negative (decreasing) values. 
+
+```{r include=TRUE, message=FALSE}
+plot(slope, main="CO5", col=colorRampPalette(brewer.pal(9,"RdYlGn"))(100))
+```
+
+  + P_value. For every slope, there is a p-value. If p < 0.05, the slope is significantly different from zero, hence a trend is present in that pixel over the duration of the dataset. 
+
+```{r include=TRUE, echo=FALSE, message=FALSE}
+pvalue <- raster("C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/3-timeseries/P_value/CO5.tif")
+```
+
+```{r include=TRUE, message=FALSE}
+plot(pvalue, main="CO5", col=colorRampPalette(brewer.pal(9,"RdYlGn"))(100))
+```
+
+and 
+
+  + Significant pixels. We would only be working with pixels that have a trend. All the other pixels are masked out of this dataset. 
+
+
+```{r include=TRUE, echo=FALSE, message=FALSE}
+trend.sig <- raster("C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/3-timeseries/SigSlp/CO5.tif")
+```
+
+
+```{r include=TRUE, message=FALSE}
+plot(trend.sig, main="CO5", col=colorRampPalette(brewer.pal(9,"RdYlGn"))(100))
+```
+
+You can also calculate the mean value for the study site. 
+
+**16.** Calculate the mean. To preserve the accuracy of the pixel values, data points are scaled between 0 to 10000. This is b/c many programs tend to remove the decimal values by accident. Here, we would like to convert the values back to their normal scale (0-1). 
+
+
+```{r eval=FALSE}
+meanVI <- summaryBrick(ESPA_VI, fun=mean, na.rm=TRUE)
+meanVI <- meanVI/10000 #Scale it back to NDVI
+```
+
+and then plot the results:
+
+  + Mean. This is a nice way to look at the heterogeneity across the study site. 
+
+```{r include=TRUE, echo=FALSE, message=FALSE}
+meanVI <- raster("C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/3-timeseries/Means/CO5.tif")
+```
+
+
+```{r include=TRUE, message=FALSE}
+plot(meanVI, main="CO5", col=colorRampPalette(brewer.pal(9,"RdYlGn"))(100))
+```
+
+
+**17.** We can also construct, save, and plot the time series object for this site.
+
+  + Calculate the mean for each image
+
+```{r eval=FALSE}
+avg_NDVI <- as.data.frame(cellStats(ESPA_VI,mean))
+avg_NDVI <- avg_NDVI/10000
+names(avg_NDVI) <- "meanNDVI"
+Datess <- ESPA_VI@z$time
+avg_NDVI$Date <- Datess
+```
+
+  + Write the results to a table on you machine
+
+```{r eval=FALSE}
+write.table(avg_NDVI, file = paste0(tabdir,"CO5", ".csv"), row.names=FALSE , append = FALSE, sep=",")
+```
+
+#### Activity 2. Locate the above table on your hard-drive. What format does it have? Can you plot the results? 
+<br>
+<br>
+<br>
+
+------------------------
+
+
+
+  + Plot the final time series object. If necessary, Use regular functions in R to fit various regression lines to these points.
+
+```{r include=TRUE, echo=FALSE, message=FALSE}
+avg_NDVI <- read.csv("C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/3-timeseries/Tables/CO5.csv")
+```
+
+
+
+```{r include=TRUE, message=FALSE}
+ggplot(avg_NDVI, aes(avg_NDVI$Date, avg_NDVI$meanNDVI), na.rm=TRUE) +
+  geom_point(size=2,colour = "blue") + 
+  ggtitle(paste("CO5")) +
+  xlab("Date") + ylab(paste("Mean", product)) + ylim(0,1) + 
+  theme(text = element_text(size=15)) 
+```
+
+
+**19.** For visualization purposes, it is sometime useful to plot the distribution of pixels with a significant trend. Here we will use the `hist` function to draw the histogram of the distribution of pixels with a significant trend at `CO5`. 
+
+```{r include=TRUE, message=FALSE}
+hist(trend.sig, main=paste("CO5"), xlim=c(-1,1), xlab = "", ylab="Frequency")
+abline(v=0,col="red", lty=2)
+```
+
+------------------------
+
+#### Activity 3. How do you interpret the results of the last to plots (time series and histogram)? 
+<br>
+<br>
+<br>
+
+------------------------
+
+
+
+
+**20.** Run the following line to check your interpretation. 
+
+```{r include=TRUE, message=FALSE}
+beep(8)
+```
+
+
