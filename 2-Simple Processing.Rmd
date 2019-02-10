@@ -58,10 +58,10 @@ Note: R is case sensitive; Uppercase and lowercase words and commands an functio
 **Warning:** Please check the below directories and change them to match data directories in your computer.
 
 ```{r output, include=TRUE, message=FALSE}
-indir <- "C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/2-simple_vis/"
-outdir <- "C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/2-simple_vis/out/"
+indir <- "D:/UCLA/SAMPLE_DATA/2-simple_vis/"
+outdir <- "D:/UCLA/SAMPLE_DATA/2-simple_vis/out"
 dir.create(outdir, showWarning=FALSE)
-crop_file<- paste0("C:/Users/fyousef/Documents/ESPA_data/Syngenta/Sampledata/shpfile/CO5.shp")
+crop_file<- paste0("D:/UCLA/SAMPLE_DATA/shpfile/CO5.shp")
 ```
 
 **6.**	Locate the tar files to be processed:
@@ -85,7 +85,7 @@ Masking and cropping are optional but highly recommended if you intend to perfor
 The extension of the output is by default .grd. This is the native format of the raster package. This format has many advantages over more common GeoTiff or ENVI formats.
 
 ```{r extract, eval=FALSE}
-processLandsat(x=mylist[2], vi='ndvi', outdir=outdir, srdir=outdir, delete=TRUE, 
+processLandsat(x=mylist[1], vi='ndvi', outdir=outdir, srdir=outdir, delete=TRUE, 
                mask='fmask', keep=0, e=extent(crop_obj), overwrite=TRUE)
 ```
 
@@ -156,7 +156,7 @@ Create a new sub-directory to store the raster stack
 
 ```{r include=TRUE, message=TRUE}
 
-outdir2 <- paste0(outdir, "/", "stack_new")
+outdir2 <- paste0(outdir,"/", "stack_new")
 dir.create(outdir2, showWarnings=FALSE)
 ```
 
