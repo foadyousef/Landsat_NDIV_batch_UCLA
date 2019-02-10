@@ -57,12 +57,21 @@ Note: R is case sensitive; Uppercase and lowercase words and commands an functio
 
 **Warning:** Please check the below directories and change them to match data directories in your computer.
 
-```{r output, include=TRUE, message=FALSE}
+```{r output, include=TRUE, eval=FALSE, message=FALSE}
 indir <- "D:/UCLA/SAMPLE_DATA/2-simple_vis/"
 outdir <- "D:/UCLA/SAMPLE_DATA/2-simple_vis/out"
 dir.create(outdir, showWarning=FALSE)
 crop_file<- paste0("D:/UCLA/SAMPLE_DATA/shpfile/CO5.shp")
 ```
+
+```{r readout, include=FALSE, eval=TRUE, message=FALSE}
+indir <- "D:/UCLA/SAMPLE_DATA/2-simple_vis/"
+outdir <- "D:/UCLA/Syngenta/DOCS/Landsat_NDIV_batch_UCLA/Data/2-simple"
+Figs <- "D:/UCLA/Syngenta/DOCS/Landsat_NDIV_batch_UCLA/Figure/"
+dir.create(outdir, showWarning=FALSE)
+crop_file<- paste0("D:/UCLA/Syngenta/DOCS/Landsat_NDIV_batch_UCLA/Data/shpfile/CO5.shp")
+```
+
 
 **6.**	Locate the tar files to be processed:
 ```{r listfiles, include=TRUE, message=FALSE}
@@ -102,6 +111,7 @@ plot(r <- mask(raster(list[1]), crop_obj))
 
 #### Activity 1: Process the second file in your input directory and save the output in the "out" folder.
 
+<br>
 <br>
 <br>
 <br>
@@ -151,7 +161,7 @@ list
 
 Create a new sub-directory to store the raster stack
 
-```{r include=TRUE, message=TRUE}
+```{r include=TRUE, eval=FALSE, message=TRUE}
 
 outdir2 <- paste0(outdir,"/", "stack_new")
 dir.create(outdir2, showWarnings=FALSE)
@@ -160,29 +170,31 @@ dir.create(outdir2, showWarnings=FALSE)
 
 **4.** Generate a file name for the output stack
 
-```{r include=TRUE, message=TRUE}
+```{r include=TRUE, eval= FALSE, message=TRUE}
 stackName <- file.path(outdir2, 'CO5_Stack.grd')
 ```
 
 **5.** Stack the layers. 
 
-```{r include=TRUE, message=TRUE}
+```{r include=TRUE, eval=FALSE, message=TRUE}
 s <- timeStack(x=list, filename=stackName, datatype='INT2S', overwrite=TRUE)
 ```
 
 
 **6.** Visualize both layers.
 
-```{r include=TRUE, message=TRUE}
+```{r include=TRUE, eval= FALSE, message=TRUE}
 plot(s)
 ```
-
+![Fig1](D:/UCLA/Syngenta/DOCS/Landsat_NDIV_batch_UCLA/Figure/Fig1.png)
 
 **7.** Processed to mask out the unwanted regions using the `crop_obj`. 
 
-```{r include=TRUE, message=TRUE}
+```{r include=TRUE, eval= FALSE, message=TRUE}
 plot(mask(s, crop_obj))
 ```
+![Fig2](D:/UCLA/Syngenta/DOCS/Landsat_NDIV_batch_UCLA/Figure/Fig2.png)
+
 
 About the example above:
 

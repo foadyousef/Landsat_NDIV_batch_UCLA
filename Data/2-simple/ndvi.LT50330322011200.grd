@@ -1,0 +1,26 @@
+[general]
+creator=R package 'raster'
+created=2019-02-10 00:14:45
+[georeference]
+nrows=190
+ncols=189
+xmin=642465
+ymin=4484625
+xmax=648135
+ymax=4490325
+projection=+proj=utm +zone=13 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0
+[data]
+datatype=INT2S
+byteorder=little
+nbands=1
+bandorder=BIL
+categorical=FALSE
+minvalue=419
+maxvalue=9102
+nodatavalue=-32768
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=layer
